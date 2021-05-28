@@ -12,6 +12,7 @@ const exec = util.promisify(require('child_process').exec);
 	await fs.mkdir("wiki", {recursive: true});
 	const url_file_handle = await fs.open("urls.txt", "w");
 	let prev_url;
+	const journeys_end = new Date("16 May 2020");
 	// while((await page.$x("//a[contains(text(), \"Next page\")]")).length > 0) {
 	// 	prev_url = page.url();
 		const pages = await page.$$(".mw-allpages-chunk li a");
@@ -24,10 +25,21 @@ const exec = util.promisify(require('child_process').exec);
 		for(let i = 0; i < urls.length; i++) {
 			// console.log((await pages[i].getProperty("href"))._remoteObject.value);
 			await page.goto(urls[i]);
-			url_set.add(page.url());
+			url_set.add(page.url().indexOf("#") > -1 ? page.url().substring(0, page.url().indexOf("#")) : page.url());
 			if(url_set.size > set_size) {
-				url_file_handle.appendFile(page.url() + "\n");
-				set_size++;
+				const history_url = page.url().indexOf("#") > -1 ? page.url().substring(0, page.url().indexOf("#")) + "?action=history&limit=500" : page.url() + "?action=history&limit=500"
+				console.log("Trying to visit: " + history_url);
+				await page.goto(history_url);
+				const dates = await page.$$(".mw-changeslist-date");
+				for(let j = 0; j < dates.length; j++) {
+					if(new Date((await dates[j].getProperty("textContent"))._remoteObject.value.substr(7)) < journeys_end) {
+						await page.goto((await dates[j].getProperty("href"))._remoteObject.value);
+						url_file_handle.appendFile(page.url() + "\n");
+						set_size++;
+						break;
+					}
+					// console.log((await dates[j].getProperty("textContent"))._remoteObject.value.substr(7));
+				}
 			}
 			// await pages[i].click();
 			// console.log(page.url());
