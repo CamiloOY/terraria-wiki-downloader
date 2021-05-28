@@ -12,25 +12,31 @@ const exec = util.promisify(require('child_process').exec);
 	await fs.mkdir("wiki", {recursive: true});
 	const url_file_handle = await fs.open("urls.txt", "w");
 	let prev_url;
-	while((await page.$x("//a[contains(text(), \"Next page\")]")).length > 0) {
-		prev_url = page.url();
+	// while((await page.$x("//a[contains(text(), \"Next page\")]")).length > 0) {
+	// 	prev_url = page.url();
 		const pages = await page.$$(".mw-allpages-chunk li a");
 		let urls = [];
 		for(let c = 0; c < pages.length; c++) {
 			urls.push((await pages[c].getProperty("href"))._remoteObject.value);
 		}
+		let url_set = new Set();
+		let set_size = url_set.size;
 		for(let i = 0; i < urls.length; i++) {
 			// console.log((await pages[i].getProperty("href"))._remoteObject.value);
 			await page.goto(urls[i]);
-			url_file_handle.appendFile(page.url() + "\n");
+			url_set.add(page.url());
+			if(url_set.size > set_size) {
+				url_file_handle.appendFile(page.url() + "\n");
+				set_size++;
+			}
 			// await pages[i].click();
 			// console.log(page.url());
 			
 		}
-		await page.goto(prev_url);
-		await page.goto((await (await page.$x("//a[contains(text(), \"Next page\")]"))[0].getProperty("href"))._remoteObject.value);
-		// await (await page.$x("//a[contains(text(), \"Next page\")]"))[0].click();
-	}
+	// 	await page.goto(prev_url);
+	// 	await page.goto((await (await page.$x("//a[contains(text(), \"Next page\")]"))[0].getProperty("href"))._remoteObject.value);
+	// 	// await (await page.$x("//a[contains(text(), \"Next page\")]"))[0].click();
+	// }
 	url_file_handle.close();
 	// const {stdout, stderr} = await exec(`D: && wget --convert-links -e robots=off --adjust-extension --page-requisites --no-parent --no-clobber --restrict-file-names=windows -U \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36\" --input-file=${__dirname + "\\urls.txt"} -P ${__dirname + "\\wiki"}`);
 	// console.log("stdout", stdout);
