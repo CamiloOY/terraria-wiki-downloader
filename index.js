@@ -27,7 +27,7 @@ const exec = util.promisify(require('child_process').exec);
 			await page.goto(urls[i]);
 			url_set.add(page.url().indexOf("#") > -1 ? page.url().substring(0, page.url().indexOf("#")) : page.url());
 			if(url_set.size > set_size) {
-				const history_url = page.url().indexOf("#") > -1 ? page.url().substring(0, page.url().indexOf("#")) + "?action=history&limit=500" : page.url() + "?action=history&limit=500"
+				const history_url = page.url().indexOf("#") > -1 ? page.url().substring(0, page.url().indexOf("#")) + "?action=history&limit=500" : page.url() + "?action=history&limit=500";
 				console.log("Trying to visit: " + history_url);
 				await page.goto(history_url);
 				const dates = await page.$$(".mw-changeslist-date");
@@ -35,11 +35,11 @@ const exec = util.promisify(require('child_process').exec);
 					if(new Date((await dates[j].getProperty("textContent"))._remoteObject.value.substr(7)) < journeys_end) {
 						await page.goto((await dates[j].getProperty("href"))._remoteObject.value);
 						url_file_handle.appendFile(page.url() + "\n");
-						set_size++;
 						break;
 					}
 					// console.log((await dates[j].getProperty("textContent"))._remoteObject.value.substr(7));
 				}
+				set_size++;
 			}
 			// await pages[i].click();
 			// console.log(page.url());
